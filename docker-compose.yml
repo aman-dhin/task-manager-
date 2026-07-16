@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: taskrail-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    container_name: taskrail-backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      PORT: 5000
+      MONGO_URI: mongodb://mongo:27017/task_manager
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+    ports:
+      - "5000:5000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:5000/api
+    container_name: taskrail-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  mongo_data:
